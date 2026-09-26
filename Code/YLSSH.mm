@@ -148,6 +148,24 @@ static char *CopyKnownHostsOption(void)
 	
     term.c_ispeed = B38400;
     term.c_ospeed = B38400;
+
+    /* ssh normally switches this pty to raw mode itself, but inside the app
+       sandbox it never gets a controlling terminal (ps shows TT "??") and
+       silently skips that step -- its debug log says
+
+           ssh_tty_make_modes: no fd or tio
+
+       The line discipline is then left echoing everything Nally writes back at
+       it: the reply to the BBS's ESC[6n cursor position query lands in the
+       login field as "^[[15;3R", ICANON holds keystrokes until Return, and
+       ICRNL rewrites the Return we send as a line feed. Nally is the terminal
+       emulator here, so set the pty up the way ssh's enter_raw_mode() would
+       and stop depending on ssh to do it. */
+    term.c_iflag |= IGNPAR;
+    term.c_iflag &= ~(ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXANY | IXOFF);
+    term.c_oflag &= ~OPOST;
+    term.c_lflag &= ~(ISIG | ICANON | IEXTEN | ECHO | ECHOE | ECHOK | ECHOKE |
+                      ECHONL | ECHOPRT | ECHOCTL);
     size.ws_col = [[YLLGlobalConfig sharedInstance] column];
     size.ws_row = [[YLLGlobalConfig sharedInstance] row];
     size.ws_xpixel = 0;
@@ -188,6 +206,10 @@ static char *CopyKnownHostsOption(void)
     } else { /* parent */
         int one = 1;
         free(knownHostsOption);
+        /* forkpty()'s termios argument does not survive inside the app
+           sandbox -- the pty comes back with the system default modes -- so
+           apply them again here, where the result can be relied on. */
+        tcsetattr(_fileDescriptor, TCSANOW, &term);
         ioctl(_fileDescriptor, TIOCPKT, &one);
         [NSThread detachNewThreadSelector: @selector(readLoop:) toTarget:[self class] withObject: self];
     }
