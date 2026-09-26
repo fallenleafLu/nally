@@ -4,7 +4,7 @@
 target 'Nally' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
-  platform :osx, '10.12'
+  platform :osx, '12.0'
   # Pods for Nally
   pod 'ImgurAnonymousAPIClient', :git => 'https://github.com/nolanw/ImgurAnonymousAPIClient.git', :tag => 'v0.3.2'
 
@@ -13,8 +13,17 @@ end
 target 'TextSuiteTests' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
-  platform :osx, '10.12'
+  platform :osx, '12.0'
 
   # Pods for TextSuiteTests
 
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      # Xcode 27 only supports deployment targets >= 12.0; the pods ship older ones.
+      config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '12.0'
+    end
+  end
 end
