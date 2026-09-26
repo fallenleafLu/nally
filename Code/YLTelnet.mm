@@ -37,6 +37,7 @@ void dump_packet(unsigned char *s, int length)
 
 @interface YLTelnet (Private)
 - (void) connectWithDictionary: (NSDictionary *)d;
+- (void) lookUpDomainNameFailed;
 - (void) stream: (NSStream *)stream handleEvent: (NSStreamEvent)eventCode;
 - (NSString *) lastError;
 - (NSHost *) host;
@@ -64,9 +65,16 @@ void dump_packet(unsigned char *s, int length)
         NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys: host, @"host", [NSNumber numberWithInt: port], @"port", nil];
         [self performSelectorOnMainThread: @selector(connectWithDictionary:) withObject: dict waitUntilDone: NO];
     } else {
-        [self setIsProcessing: NO];
+        /* Runs on a background thread: -setIsProcessing: is bound to the tab's
+           progress indicator, so it has to be applied on the main thread. */
+        [self performSelectorOnMainThread: @selector(lookUpDomainNameFailed) withObject: nil waitUntilDone: NO];
     }
     [pool release];
+}
+
+- (void) lookUpDomainNameFailed
+{
+    [self setIsProcessing: NO];
 }
 
 - (void) close
