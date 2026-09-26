@@ -558,7 +558,6 @@
 				LastUpgradeCheck = 0710;
 				TargetAttributes = {
 					8D1107260486CEB800E47090 = {
-						DevelopmentTeam = J9849FB53X;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.HardenedRuntime = {
@@ -896,11 +895,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Nally.entitlements;
 				CODE_SIGN_IDENTITY = "Mac Developer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = J9849FB53X;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -911,7 +911,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				INFOPLIST_FILE = Resources/Info.plist;
 				INSTALL_PATH = /Applications;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				OTHER_CFLAGS = "-D__DUMPPACKET__";
 				PRODUCT_BUNDLE_IDENTIFIER = com.rayer.nally;
 				PRODUCT_NAME = Nally;
@@ -928,10 +928,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Nally.entitlements;
 				CODE_SIGN_IDENTITY = "Mac Developer";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = J9849FB53X;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
@@ -942,12 +943,11 @@
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INFOPLIST_FILE = Resources/Info.plist;
 				INSTALL_PATH = /Applications;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rayer.nally;
 				PRODUCT_NAME = Nally;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
-				VALID_ARCHS = "i386 x86_64";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
@@ -961,7 +961,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_PREFIX_HEADER = "";
 				INFOPLIST_PREPROCESS = NO;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = Nally;
 				SDKROOT = macosx;
@@ -976,7 +976,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_PREFIX_HEADER = "";
 				INFOPLIST_PREPROCESS = NO;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				PRODUCT_NAME = Nally;
 				SDKROOT = macosx;
 			};

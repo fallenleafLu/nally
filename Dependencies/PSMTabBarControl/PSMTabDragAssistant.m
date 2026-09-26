@@ -336,8 +336,14 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
     // move actual NSTabViewItem
     if ([self sourceTabBar] != [self destinationTabBar]) {
 		//remove the tracking rects and bindings registered on the old tab
-		[[self sourceTabBar] removeTrackingRect:[[self draggedCell] closeButtonTrackingTag]];
-		[[self sourceTabBar] removeTrackingRect:[[self draggedCell] cellTrackingTag]];
+		if ([[self draggedCell] closeButtonTrackingTag] != 0) {
+			[[self sourceTabBar] removeTrackingRect:[[self draggedCell] closeButtonTrackingTag]];
+			[[self draggedCell] setCloseButtonTrackingTag:0];
+		}
+		if ([[self draggedCell] cellTrackingTag] != 0) {
+			[[self sourceTabBar] removeTrackingRect:[[self draggedCell] cellTrackingTag]];
+			[[self draggedCell] setCellTrackingTag:0];
+		}
 		[[self sourceTabBar] removeTabForCell:[self draggedCell]];
 		
 		NSInteger i, insertIndex;
@@ -418,8 +424,14 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
 				[[control cells] insertObject:[self draggedCell] atIndex:0];
 				
 				//remove the tracking rects and bindings registered on the old tab
-				[[self sourceTabBar] removeTrackingRect:[[self draggedCell] closeButtonTrackingTag]];
-				[[self sourceTabBar] removeTrackingRect:[[self draggedCell] cellTrackingTag]];
+				if ([[self draggedCell] closeButtonTrackingTag] != 0) {
+					[[self sourceTabBar] removeTrackingRect:[[self draggedCell] closeButtonTrackingTag]];
+					[[self draggedCell] setCloseButtonTrackingTag:0];
+				}
+				if ([[self draggedCell] cellTrackingTag] != 0) {
+					[[self sourceTabBar] removeTrackingRect:[[self draggedCell] cellTrackingTag]];
+					[[self draggedCell] setCellTrackingTag:0];
+				}
 				[[self sourceTabBar] removeTabForCell:[self draggedCell]];
 				
 				//rebind the cell to the new control

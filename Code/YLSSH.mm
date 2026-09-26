@@ -17,8 +17,36 @@
 #include <unistd.h>
 #include <termios.h>
 #include <stdarg.h>
+#include <string.h>
 
 #define CTRLKEY(c)   ((c)-'A'+1)
+
+/* ssh resolves ~/.ssh from the passwd entry rather than $HOME, so under the
+   app sandbox the child process is denied the real ~/.ssh/known_hosts and host
+   key verification fails outright:
+
+       hostkeys_foreach failed for /Users/x/.ssh/known_hosts: Operation not permitted
+       Host key verification failed.
+
+   Point it at a known_hosts inside our own home instead -- that is the
+   container when sandboxed, and the real ~/.ssh (which is what ssh would have
+   picked anyway) when it is not.
+
+   The value is quoted because ssh splits UserKnownHostsFile on whitespace.
+   Returns a malloc'd string so it stays valid across forkpty(). */
+static char *CopyKnownHostsOption(void)
+{
+    NSString *directory = [NSHomeDirectory() stringByAppendingPathComponent: @".ssh"];
+    NSDictionary *attributes = [NSDictionary dictionaryWithObject: [NSNumber numberWithShort: 0700]
+                                                           forKey: NSFilePosixPermissions];
+    [[NSFileManager defaultManager] createDirectoryAtPath: directory
+                              withIntermediateDirectories: YES
+                                               attributes: attributes
+                                                    error: NULL];
+    NSString *option = [NSString stringWithFormat: @"UserKnownHostsFile=\"%@\"",
+                        [directory stringByAppendingPathComponent: @"known_hosts"]];
+    return strdup([option UTF8String]);
+}
 
 @implementation YLSSH
 
@@ -120,31 +148,68 @@
 	
     term.c_ispeed = B38400;
     term.c_ospeed = B38400;
+
+    /* ssh normally switches this pty to raw mode itself, but inside the app
+       sandbox it never gets a controlling terminal (ps shows TT "??") and
+       silently skips that step -- its debug log says
+
+           ssh_tty_make_modes: no fd or tio
+
+       The line discipline is then left echoing everything Nally writes back at
+       it: the reply to the BBS's ESC[6n cursor position query lands in the
+       login field as "^[[15;3R", ICANON holds keystrokes until Return, and
+       ICRNL rewrites the Return we send as a line feed. Nally is the terminal
+       emulator here, so set the pty up the way ssh's enter_raw_mode() would
+       and stop depending on ssh to do it. */
+    term.c_iflag |= IGNPAR;
+    term.c_iflag &= ~(ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXANY | IXOFF);
+    term.c_oflag &= ~OPOST;
+    term.c_lflag &= ~(ISIG | ICANON | IEXTEN | ECHO | ECHOE | ECHOK | ECHOKE |
+                      ECHONL | ECHOPRT | ECHOCTL);
     size.ws_col = [[YLLGlobalConfig sharedInstance] column];
     size.ws_row = [[YLLGlobalConfig sharedInstance] row];
     size.ws_xpixel = 0;
     size.ws_ypixel = 0;
     
+    /* ssh cannot open /dev/tty inside the sandbox ("Device not configured"),
+       so it can never ask whether to trust an unknown host and every first
+       connection dies with "Host key verification failed". Record the key on
+       first sight instead; a key that later changes is still refused. */
+    static const char *strictHostKeyCheckingOption = "StrictHostKeyChecking=accept-new";
+
+    char *knownHostsOption = CopyKnownHostsOption();
+    const char *portArgument = [[NSString stringWithFormat: @"%d", port] UTF8String];
+    const char *addressArgument = [addr UTF8String];
+
     _pid = forkpty(&_fileDescriptor, slaveName, &term, &size);
     if (_pid == 0) { /* child */
         if (_loginAsBBS) {
             execlp("/usr/bin/ssh", "ssh", "-e",
                    "none", // do not use EscapeChar
-                   "-x", "-p",
-                   [[NSString stringWithFormat: @"%d", port] UTF8String],
-                   [addr UTF8String], NULL);
+                   "-x",
+                   "-o", knownHostsOption,
+                   "-o", strictHostKeyCheckingOption,
+                   "-p", portArgument,
+                   addressArgument, NULL);
             fprintf(stderr, "fork error");
         } else {
             // should be customizable in the future
             const char *envp[] = { "TERM=vt102", NULL };
             execle("/usr/bin/ssh", "ssh",
                    "-e", "none", // do not use EscapeChar
-                   "-p", [[NSString stringWithFormat: @"%d", port] UTF8String],
-                   [addr UTF8String], NULL, envp);
+                   "-o", knownHostsOption,
+                   "-o", strictHostKeyCheckingOption,
+                   "-p", portArgument,
+                   addressArgument, NULL, envp);
             fprintf(stderr, "fork error");
         }
     } else { /* parent */
         int one = 1;
+        free(knownHostsOption);
+        /* forkpty()'s termios argument does not survive inside the app
+           sandbox -- the pty comes back with the system default modes -- so
+           apply them again here, where the result can be relied on. */
+        tcsetattr(_fileDescriptor, TCSANOW, &term);
         ioctl(_fileDescriptor, TIOCPKT, &one);
         [NSThread detachNewThreadSelector: @selector(readLoop:) toTarget:[self class] withObject: self];
     }

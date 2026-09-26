@@ -22,8 +22,6 @@
 											   object:self];
 	[self setPostsFrameChangedNotifications:YES];
 	[self resetCursorRects];
-	
-	_myTrackingRectTag = -1;
 }
 
 - (void)dealloc
@@ -108,10 +106,10 @@
 
 - (void)removeTrackingRect
 {
-	if (_myTrackingRectTag != -1) {
+	if (_myTrackingRectTag != 0) {
 		[self removeTrackingRect:_myTrackingRectTag];
 	}
-	_myTrackingRectTag = -1;
+	_myTrackingRectTag = 0;
 }
 
 // override for rollover effect
