@@ -26,4 +26,18 @@ post_install do |installer|
       config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '12.0'
     end
   end
+
+  # AFNetworking 4.0.1 imports <netinet6/in6.h> directly. The current SDK marks
+  # that header private to the Darwin module, which is a hard error under
+  # -fmodules. netinet/in.h (imported on the line above) already provides it,
+  # so the import is simply dropped.
+  Dir.glob(File.join(installer.sandbox.root, 'AFNetworking', '**', '*.m')).each do |file|
+    source = File.read(file)
+    patched = source.gsub(/^#import <netinet6\/in6\.h>\n/, '')
+    next if patched == source
+    mode = File.stat(file).mode
+    File.chmod(0644, file)
+    File.write(file, patched)
+    File.chmod(mode, file)
+  end
 end
