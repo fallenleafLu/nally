@@ -719,7 +719,7 @@
         [self saveLastConnections];
     
     if (![[NSUserDefaults standardUserDefaults] boolForKey: @"ConfirmOnClose"]) 
-        return YES;
+        return NSTerminateNow;
     
     BOOL hasConnectedConnetion = NO;
     for (i = 0; i < tabNumber; i++) {
@@ -727,7 +727,7 @@
         if ([connection connected]) 
             hasConnectedConnetion = YES;
     }
-    if (!hasConnectedConnetion) return YES;
+    if (!hasConnectedConnetion) return NSTerminateNow;
     
     NSString *errorMessage = [NSString stringWithFormat: NSLocalizedString(@"There are %d tabs open in Nally. Do you want to quit anyway?", @"Sheet Message"), tabNumber];
     NSBeginAlertSheet(NSLocalizedString(@"Are you sure you want to quit Nally?", @"Sheet Title"),

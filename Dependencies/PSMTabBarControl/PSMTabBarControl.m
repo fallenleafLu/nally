@@ -1029,7 +1029,10 @@
     BOOL mouseInCell = NSMouseInRect(mousePoint, cellTrackingRect, [self isFlipped]);
     
     //set the cell tracking rect
-    [self removeTrackingRect:[cell cellTrackingTag]];
+    if ([cell cellTrackingTag] != 0) {
+        [self removeTrackingRect:[cell cellTrackingTag]];
+        [cell setCellTrackingTag:0];
+    }
     tag = [self addTrackingRect:cellTrackingRect owner:cell userData:nil assumeInside:mouseInCell];
     [cell setCellTrackingTag:tag];
     [cell setHighlighted:mouseInCell];
@@ -1039,7 +1042,10 @@
         BOOL mouseInCloseRect = NSMouseInRect(mousePoint, closeRect, [self isFlipped]);
         
         //set the close button tracking rect
-        [self removeTrackingRect:[cell closeButtonTrackingTag]];
+        if ([cell closeButtonTrackingTag] != 0) {
+            [self removeTrackingRect:[cell closeButtonTrackingTag]];
+            [cell setCloseButtonTrackingTag:0];
+        }
         tag = [self addTrackingRect:closeRect owner:cell userData:nil assumeInside:mouseInCloseRect];
         [cell setCloseButtonTrackingTag:tag];
         

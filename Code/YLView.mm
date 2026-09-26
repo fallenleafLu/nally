@@ -776,7 +776,10 @@ BOOL isSpecialSymbol(unichar ch)
     NSAutoreleasePool *pool = [NSAutoreleasePool new];
     YLTerminal *ds = [self frontMostTerminal];
         
-	if ([self connected]) {
+	/* Keep showing the terminal contents after the peer hangs up: a closed
+	   connection often leaves its last message (or the reason it closed) on
+	   screen, and wiping the view would throw that away. */
+	if (ds) {
         /* Draw the backed image */
 		NSRect imgRect = rect;
 		imgRect.origin.y = (_fontHeight * gRow) - rect.origin.y - rect.size.height;
@@ -801,12 +804,14 @@ BOOL isSpecialSymbol(unichar ch)
         }
         
 		/* Draw the cursor */
-		[[NSColor whiteColor] set];
-		[NSBezierPath setDefaultLineWidth: 2.0];
-		[NSBezierPath strokeLineFromPoint: NSMakePoint(ds->_cursorX * _fontWidth, (gRow - 1 - ds->_cursorY) * _fontHeight + 1) 
-								  toPoint: NSMakePoint((ds->_cursorX + 1) * _fontWidth, (gRow - 1 - ds->_cursorY) * _fontHeight + 1) ];
-        [NSBezierPath setDefaultLineWidth: 1.0];
-        _x = ds->_cursorX, _y = ds->_cursorY;
+		if ([self connected]) {
+			[[NSColor whiteColor] set];
+			[NSBezierPath setDefaultLineWidth: 2.0];
+			[NSBezierPath strokeLineFromPoint: NSMakePoint(ds->_cursorX * _fontWidth, (gRow - 1 - ds->_cursorY) * _fontHeight + 1) 
+									  toPoint: NSMakePoint((ds->_cursorX + 1) * _fontWidth, (gRow - 1 - ds->_cursorY) * _fontHeight + 1) ];
+			[NSBezierPath setDefaultLineWidth: 1.0];
+			_x = ds->_cursorX, _y = ds->_cursorY;
+		}
 
         /* Draw the selection */
         if (_selectionLength != 0) 
